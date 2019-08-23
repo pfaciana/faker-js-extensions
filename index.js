@@ -1,5 +1,9 @@
 var faker = faker || {};
 
+if (typeof window === 'object') {
+	faker = window.faker = window.hasOwnProperty('faker') ? window.faker : {};
+}
+
 faker.definitions = faker.definitions || {};
 
 faker.locales = faker.locales || {};
@@ -26,8 +30,19 @@ faker = require('./src/name')(faker);
 faker = require('./src/payment')(faker);
 faker = require('./src/random')(faker);
 
-if (typeof window !== 'undefined') {
-	window.faker = window.faker || faker;
-}
+module.exports = function (f) {
+	f = typeof f === 'object' ? f : {};
 
-module.exports = faker;
+	for (var namespace in faker) {
+		if (faker.hasOwnProperty(namespace)) {
+			for (var method in faker[namespace]) {
+				if (faker[namespace].hasOwnProperty(method)) {
+					f[namespace] = f[namespace] || {};
+					f[namespace][method] = faker[namespace][method];
+				}
+			}
+		}
+	}
+
+	return f;
+};
