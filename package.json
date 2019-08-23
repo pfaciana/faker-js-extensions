@@ -1,0 +1,27 @@
+{
+	"name": "faker.js-extensions",
+	"version": "1.0.0",
+	"description": "This adds additional methods to faker.js to generate massive amounts of realistic fake data in Node.js and the browser",
+	"main": "base.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pfaciana/faker.js-extensions.git"
+	},
+	"scripts": {},
+	"author": "Phil Faciana <phil@renderdev.com> (https://renderdev.com/)",
+	"license": "MIT",
+	"homepage": "https://github.com/pfaciana/faker.js-extensions",
+	"devDependencies": {
+		"browserify-buffer": "github:pfaciana/browserify-buffer",
+		"gulp": "^4.0.1",
+		"gulp-brotli": "^1",
+		"gulp-conditional-eol": "github:pfaciana/gulp-conditional-eol",
+		"gulp-create-tasks": "github:pfaciana/gulp-create-tasks",
+		"gulp-debug": "^4",
+		"gulp-if": "^2",
+		"gulp-rename": "^1",
+		"gulp-size": "^3",
+		"gulp-uglify": "^3"
+	},
+	"dependencies": {}
+}
