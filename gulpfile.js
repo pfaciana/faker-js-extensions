@@ -35,6 +35,7 @@ const builds = {
 					.pipe(gulpif(_.minify && _.size, size(_.size)))
 					.pipe(gulp.dest(_.dest))
 					.pipe(gulpif(_.minify, brotli.compress({extension: 'br', quality: 11})))
+					.pipe(gulpif(_.minify && _.sizeNgz, size(_.sizeNgz)))
 					.pipe(gulpif(_.minify, gulp.dest(_.dest)));
 			}
 		},
