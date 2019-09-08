@@ -1,6 +1,6 @@
 {
 	"name": "faker-js-extensions",
-	"version": "1.0.6",
+	"version": "1.1.0",
 	"description": "This adds additional methods to faker.js to generate massive amounts of realistic fake data in Node.js and the browser",
 	"main": "index.js",
 	"repository": {
