@@ -20,6 +20,12 @@ faker.commerce = faker.commerce || {};
 
 faker.internet = faker.internet || {};
 
+faker.random = faker.random || {};
+
+faker.random.number = faker.random.number || function () {
+	return Math.random() * 100;
+};
+
 /* include new methods */
 
 faker = require('./src/address')(faker);
