@@ -31,3 +31,7 @@ This adds additional methods to faker.js to generate massive amounts of realisti
   * numberSize (PHP's Base\randomNumber)
   * float (PHP's Base\randomFloat)
   * letter (PHP's Base\randomLetter)
+
+### Bonus
+
+There also is a `fake` function which takes a string representation of a faker call. Can be used when creating custom yaml types. This allows you to use the faker library in a yaml file and when the yaml is parsed returns the random faker value.

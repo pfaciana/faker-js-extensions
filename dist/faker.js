@@ -63,23 +63,25 @@
 		faker = require('./src/payment')(faker);
 		faker = require('./src/random')(faker);
 
-		module.exports = function (f) {
-			f = typeof f === 'object' ? f : {};
+		module.exports = function (userFaker) {
+			userFaker = typeof userFaker === 'object' ? userFaker : {};
 
 			for (var namespace in faker) {
 				if (faker.hasOwnProperty(namespace)) {
 					for (var method in faker[namespace]) {
 						if (faker[namespace].hasOwnProperty(method)) {
-							f[namespace] = f[namespace] || {};
-							f[namespace][method] = faker[namespace][method];
+							userFaker[namespace] = userFaker[namespace] || {};
+							userFaker[namespace][method] = faker[namespace][method];
 						}
 					}
 				}
 			}
 
-			return f;
+			return userFaker;
 		};
-	}, {"./src/address": 2, "./src/color": 3, "./src/company": 4, "./src/internet": 5, "./src/name": 6, "./src/payment": 7, "./src/random": 8}], 2: [function (require, module, exports) {
+
+		module.exports.fake = require('./src/fake')(faker);
+	}, {"./src/address": 2, "./src/color": 3, "./src/company": 4, "./src/fake": 5, "./src/internet": 6, "./src/name": 7, "./src/payment": 8, "./src/random": 9}], 2: [function (require, module, exports) {
 		module.exports = function (faker) {
 			faker.address = faker.address || {};
 
@@ -137,6 +139,143 @@
 		};
 	}, {}], 5: [function (require, module, exports) {
 		module.exports = function (faker) {
+			if (faker == null) {
+				if (typeof window !== 'object' || window.hasOwnProperty('faker')) {
+					return console.log('faker is not defined.');
+				}
+				faker = window.faker;
+			}
+
+			var explode = function (delimiter, string, limit) {
+				delimiter = (delimiter != null ? delimiter : ',') + '';
+				var s = String(string).split(delimiter);
+
+				limit |= 0;
+				if (limit < 2) {
+					return s;
+				}
+
+				return s.slice(0, limit - 1).concat([s.slice(limit - 1).join(delimiter)])
+			};
+
+			// http://locutus.io/php/strings/trim/
+			var trim = function (str, charlist) {
+				var l,
+					whitespace = [' ', '\n', '\r', '\t', '\f', '\x0b', '\xa0', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200A', '\u200B', '\u2028', '\u2029', '\u3000'].join('');
+				str += '';
+
+				if (charlist) {
+					whitespace = (charlist + '').replace(/([[\]().?/*{}+$^:])/g, '$1');
+				}
+
+				l = str.length;
+				for (i = 0; i < l; i++) {
+					if (whitespace.indexOf(str.charAt(i)) === -1) {
+						str = str.substring(i);
+						break;
+					}
+				}
+
+				l = str.length;
+				for (i = l - 1; i >= 0; i--) {
+					if (whitespace.indexOf(str.charAt(i)) === -1) {
+						str = str.substring(0, i + 1);
+						break;
+					}
+				}
+
+				return whitespace.indexOf(str.charAt(0)) === -1 ? str : '';
+			};
+
+			var safeParse = function (data) {
+				if (typeof data !== "string" || typeof data === "undefined") {
+					return data;
+				}
+
+				try {
+					data = data.replace(/(\r\n|\n|\r|\t)/gm, "");
+					return JSON.parse(data.replace(/(\r\n|\n|\r|\t)/gm, ""));
+				} catch (e) {
+					return data;
+				}
+			};
+
+			var fake = function (input, argsDelimiter, useFnParens, methodDelimiter) {
+				argsDelimiter = argsDelimiter != null ? argsDelimiter : "|";
+				useFnParens = useFnParens != null ? useFnParens : false;
+				methodDelimiter = methodDelimiter != null ? methodDelimiter : '.';
+
+				var specialChars = ['*', '(', ')', '|', '[', '?'];
+				var escapeChar = argsDelimiter !== "%" ? "%" : "_";
+				var argsDelimiterUnicode = argsDelimiter.split('').map(function (char) {
+					return char.charCodeAt();
+				}).join(escapeChar);
+				var escapedArgs = escapeChar + 'escape' + escapeChar + argsDelimiterUnicode + escapeChar;
+				var methods, args;
+
+				input = input.replace(new RegExp((specialChars.indexOf(argsDelimiter) > -1 ? "\\\\\\" : "\\\\") + argsDelimiter, "g"), escapedArgs);
+
+				if (useFnParens) {
+					input = explode('(', input, 2);
+
+					methods = input[0];
+					args = input.length > 1 ? input[1] : '';
+
+					if (args.slice(-1) === ')') {
+						args = args.slice(0, -1);
+					}
+
+					args = args.trim() === '' ? [] : args.split(argsDelimiter);
+				} else {
+					args = input.split(argsDelimiter);
+					methods = args.shift();
+				}
+
+				args = args.map(function (arg) {
+					return safeParse(trim(arg.replace(new RegExp(escapedArgs, "g"), argsDelimiter)));
+				});
+
+				var caller = faker;
+
+				methods.split(methodDelimiter).forEach(function (method) {
+					caller = caller[method];
+				});
+
+				return caller.apply(null, args);
+			};
+
+			if (typeof window === 'object') {
+				window.fake = fake;
+			}
+
+			return fake;
+		};
+
+		/*
+		 * argsDelimiter = ":", useFnParens = false, methodDelimiter = '.'
+		 * input = random.words
+		 * input = random.words:3
+		 * input = random.float:3:10
+		 * input = random.objectElement:{"key1"\\:"value1","key2"\\:"value2 with special \\",()[]{}.\\:; chars"}
+		 * input = random.objectElement:{"key1"\\:"value1","key2"\\:"value2 with special \\",()[]{}.\\:; chars"}:key
+		 */
+
+		/*
+		 * argsDelimiter = ",", useFnParens = true, methodDelimiter = '.'
+		 * input = random.words
+		 * input = random.words()
+		 * input = random.words(3)
+		 * input = random.float(3,10)
+		 * input = random.objectElement({"key1":"value1"\\,"key2":"value2 with special \\"\\,()[]{}.:; chars"})
+		 * input = random.objectElement({"key1":"value1"\\,"key2":"value2 with special \\"\\,()[]{}.:; chars"}, key)
+		 */
+
+		/*
+		 * argsDelimiter = "|", useFnParens = false, methodDelimiter = '.'
+		 * input = random.objectElement|{"key1":"value1","key2":"value2 with special \\",()[]{}.:; chars"}|key
+		 */
+	}, {}], 6: [function (require, module, exports) {
+		module.exports = function (faker) {
 			faker.internet = faker.internet || {};
 
 			faker.internet.slug = function (wordCount) {
@@ -146,7 +285,7 @@
 
 			return faker;
 		};
-	}, {}], 6: [function (require, module, exports) {
+	}, {}], 7: [function (require, module, exports) {
 		module.exports = function (faker) {
 			faker.name = faker.name || {};
 
@@ -246,7 +385,7 @@
 
 			return faker;
 		};
-	}, {}], 7: [function (require, module, exports) {
+	}, {}], 8: [function (require, module, exports) {
 		module.exports = function (faker) {
 			faker.payment = faker.payment || {};
 
@@ -355,7 +494,7 @@
 
 			return faker;
 		};
-	}, {}], 8: [function (require, module, exports) {
+	}, {}], 9: [function (require, module, exports) {
 		module.exports = function (faker) {
 			faker.random = faker.random || {};
 

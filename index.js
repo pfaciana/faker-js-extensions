@@ -36,19 +36,21 @@ faker = require('./src/name')(faker);
 faker = require('./src/payment')(faker);
 faker = require('./src/random')(faker);
 
-module.exports = function (f) {
-	f = typeof f === 'object' ? f : {};
+module.exports = function (userFaker) {
+	userFaker = typeof userFaker === 'object' ? userFaker : {};
 
 	for (var namespace in faker) {
 		if (faker.hasOwnProperty(namespace)) {
 			for (var method in faker[namespace]) {
 				if (faker[namespace].hasOwnProperty(method)) {
-					f[namespace] = f[namespace] || {};
-					f[namespace][method] = faker[namespace][method];
+					userFaker[namespace] = userFaker[namespace] || {};
+					userFaker[namespace][method] = faker[namespace][method];
 				}
 			}
 		}
 	}
 
-	return f;
+	return userFaker;
 };
+
+module.exports.fake = require('./src/fake')(faker);
